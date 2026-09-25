@@ -1,7 +1,24 @@
 import unittest
 from pathlib import Path
 
-from render import markdown_to_html, parse_front_matter, select_template
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+
+from render import (
+    markdown_to_html,
+    parse_front_matter,
+    render_document,
+    select_template,
+)
+
+ROOT = Path(__file__).resolve().parent.parent
+TEMPLATES_DIR = ROOT / "templates"
+
+
+def make_env():
+    return Environment(
+        loader=FileSystemLoader(str(TEMPLATES_DIR)),
+        autoescape=select_autoescape(["html", "xml"]),
+    )
 
 
 class ParseFrontMatterTests(unittest.TestCase):
@@ -72,6 +89,27 @@ class SelectTemplateTests(unittest.TestCase):
             select_template(Path("articles/post.md"), {"template": "nope"}),
             "article.html",
         )
+
+
+class RenderDocumentTests(unittest.TestCase):
+    def test_page_document(self):
+        html = render_document(
+            make_env(), "page.html", {"title": "About"}, "<h1>About</h1>"
+        )
+        self.assertIn("<title>About</title>", html)
+        self.assertIn("<h1>About</h1>", html)
+
+    def test_article_document(self):
+        meta = {"title": "Post", "date": "2026-02-01", "author": "Ann"}
+        html = render_document(make_env(), "article.html", meta, "<p>x</p>")
+        self.assertIn("<h1>Post</h1>", html)
+        self.assertIn('<time datetime="2026-02-01">2026-02-01</time>', html)
+
+    def test_nav_active(self):
+        html = render_document(
+            make_env(), "page.html", {"nav_active": "principles"}, ""
+        )
+        self.assertIn('href="/#principles" class="active"', html)
 
 
 if __name__ == "__main__":

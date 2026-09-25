@@ -2,6 +2,7 @@ from pathlib import Path
 
 import markdown as markdown_lib
 import yaml
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 VALID_TEMPLATES = {"page": "page.html", "article": "article.html"}
 DEFAULT_TEMPLATE = "page.html"
@@ -58,3 +59,12 @@ def select_template(rel_path, meta):
     if parts and parts[0] == ARTICLE_DIR:
         return VALID_TEMPLATES["article"]
     return DEFAULT_TEMPLATE
+
+
+def render_document(env, template_name, meta, body_html):
+    template = env.get_template(template_name)
+    return template.render(
+        page=meta,
+        content=body_html,
+        nav_active=meta.get("nav_active"),
+    )
