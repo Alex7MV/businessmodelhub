@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}{% if page.title %}{{ page.title }}{% else %}{{ super() }}{% endif %}{% endblock %}
+{% block description %}{{ page.description }}{% endblock %}
+
+{% block content %}
+{% block hero %}{% endblock %}
+
+<main class="page-body">
+{{ content|safe }}
+</main>
+{% endblock %}
