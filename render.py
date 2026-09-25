@@ -96,3 +96,13 @@ def build(content_dir, templates_dir, assets_dir, out_dir):
 
     shutil.copytree(assets_dir, out_dir / "assets", dirs_exist_ok=True)
     return sorted(written)
+
+
+def main():
+    written = build("content", "templates", "assets", "dist")
+    for path in written:
+        print(path)
+
+
+if __name__ == "__main__":
+    main()
