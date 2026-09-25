@@ -1,6 +1,6 @@
 import unittest
 
-from render import parse_front_matter
+from render import markdown_to_html, parse_front_matter
 
 
 class ParseFrontMatterTests(unittest.TestCase):
@@ -34,6 +34,17 @@ class ParseFrontMatterTests(unittest.TestCase):
     def test_non_mapping_raises(self):
         with self.assertRaises(ValueError):
             parse_front_matter("---\n- a\n- b\n---\nBody")
+
+
+class MarkdownTests(unittest.TestCase):
+    def test_heading(self):
+        self.assertIn("<h1>Title</h1>", markdown_to_html("# Title"))
+
+    def test_bold(self):
+        self.assertIn("<strong>b</strong>", markdown_to_html("**b**"))
+
+    def test_paragraph(self):
+        self.assertIn("<p>text</p>", markdown_to_html("text"))
 
 
 if __name__ == "__main__":

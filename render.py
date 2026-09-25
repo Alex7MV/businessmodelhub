@@ -1,3 +1,4 @@
+import markdown as markdown_lib
 import yaml
 
 
@@ -37,3 +38,7 @@ def parse_front_matter(text):
 
     body = "\n".join(lines[end + 1:])
     return meta, body
+
+
+def markdown_to_html(body):
+    return markdown_lib.markdown(body, extensions=["extra"])
