@@ -16,6 +16,10 @@ class PageTemplateTests(unittest.TestCase):
         html = render("page.html", page={"title": "About"}, content="")
         self.assertIn("<title>About</title>", html)
 
+    def test_title_falls_back_to_page_name(self):
+        html = render("page.html", page={"name": "GLM-5.3-Flash"}, content="")
+        self.assertIn("<title>GLM-5.3-Flash</title>", html)
+
     def test_title_falls_back_to_default(self):
         html = render("page.html", page={}, content="")
         self.assertIn("<title>Business Model Hub Foundation</title>", html)

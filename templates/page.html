@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{% if page.title %}{{ page.title }}{% else %}{{ super() }}{% endif %}{% endblock %}
+{% block title %}{% if page.title %}{{ page.title }}{% elif page.name %}{{ page.name }}{% else %}{{ super() }}{% endif %}{% endblock %}
 {% block description %}{{ page.description }}{% endblock %}
 
 {% block content %}
