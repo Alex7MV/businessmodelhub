@@ -1,5 +1,11 @@
+from pathlib import Path
+
 import markdown as markdown_lib
 import yaml
+
+VALID_TEMPLATES = {"page": "page.html", "article": "article.html"}
+DEFAULT_TEMPLATE = "page.html"
+ARTICLE_DIR = "articles"
 
 
 class _FrontMatterLoader(yaml.SafeLoader):
@@ -42,3 +48,13 @@ def parse_front_matter(text):
 
 def markdown_to_html(body):
     return markdown_lib.markdown(body, extensions=["extra"])
+
+
+def select_template(rel_path, meta):
+    name = meta.get("template")
+    if name in VALID_TEMPLATES:
+        return VALID_TEMPLATES[name]
+    parts = Path(rel_path).parts
+    if parts and parts[0] == ARTICLE_DIR:
+        return VALID_TEMPLATES["article"]
+    return DEFAULT_TEMPLATE

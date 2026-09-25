@@ -1,6 +1,7 @@
 import unittest
+from pathlib import Path
 
-from render import markdown_to_html, parse_front_matter
+from render import markdown_to_html, parse_front_matter, select_template
 
 
 class ParseFrontMatterTests(unittest.TestCase):
@@ -45,6 +46,32 @@ class MarkdownTests(unittest.TestCase):
 
     def test_paragraph(self):
         self.assertIn("<p>text</p>", markdown_to_html("text"))
+
+
+class SelectTemplateTests(unittest.TestCase):
+    def test_default_page(self):
+        self.assertEqual(select_template(Path("index.md"), {}), "page.html")
+
+    def test_articles_dir(self):
+        self.assertEqual(select_template(Path("articles/post.md"), {}), "article.html")
+
+    def test_meta_overrides_dir(self):
+        self.assertEqual(
+            select_template(Path("articles/post.md"), {"template": "page"}),
+            "page.html",
+        )
+
+    def test_meta_article_outside_dir(self):
+        self.assertEqual(
+            select_template(Path("about.md"), {"template": "article"}),
+            "article.html",
+        )
+
+    def test_invalid_meta_falls_back(self):
+        self.assertEqual(
+            select_template(Path("articles/post.md"), {"template": "nope"}),
+            "article.html",
+        )
 
 
 if __name__ == "__main__":
