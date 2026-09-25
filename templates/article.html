@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page.title }} — Business Model Hub{% endblock %}
+{% block description %}{{ page.description }}{% endblock %}
+
+{% block content %}
+<header class="page-head">
+    {% if page.overline %}<div class="overline">{{ page.overline }}</div>{% endif %}
+    <h1>{{ page.title }}</h1>
+    {% if page.author or page.date %}
+    <p class="article-meta">
+        {%- if page.author %}{{ page.author }}{% endif -%}
+        {%- if page.author and page.date %} &middot; {% endif -%}
+        {%- if page.date %}<time datetime="{{ page.date }}">{{ page.date }}</time>{% endif -%}
+    </p>
+    {% endif %}
+</header>
+
+<main class="article-body">
+{{ content|safe }}
+</main>
+{% endblock %}
