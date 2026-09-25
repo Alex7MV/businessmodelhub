@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 
 import markdown as markdown_lib
@@ -68,3 +69,30 @@ def render_document(env, template_name, meta, body_html):
         content=body_html,
         nav_active=meta.get("nav_active"),
     )
+
+
+def build(content_dir, templates_dir, assets_dir, out_dir):
+    content_dir = Path(content_dir)
+    templates_dir = Path(templates_dir)
+    assets_dir = Path(assets_dir)
+    out_dir = Path(out_dir)
+
+    env = Environment(
+        loader=FileSystemLoader(str(templates_dir)),
+        autoescape=select_autoescape(["html", "xml"]),
+    )
+
+    written = []
+    for source in sorted(content_dir.rglob("*.md")):
+        rel_path = source.relative_to(content_dir)
+        meta, body = parse_front_matter(source.read_text(encoding="utf-8"))
+        body_html = markdown_to_html(body)
+        template_name = select_template(rel_path, meta)
+        html = render_document(env, template_name, meta, body_html)
+        target = out_dir / rel_path.with_suffix(".html")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(html, encoding="utf-8")
+        written.append(target)
+
+    shutil.copytree(assets_dir, out_dir / "assets", dirs_exist_ok=True)
+    return sorted(written)

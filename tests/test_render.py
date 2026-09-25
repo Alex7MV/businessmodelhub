@@ -1,9 +1,11 @@
+import tempfile
 import unittest
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from render import (
+    build,
     markdown_to_html,
     parse_front_matter,
     render_document,
@@ -110,6 +112,33 @@ class RenderDocumentTests(unittest.TestCase):
             make_env(), "page.html", {"nav_active": "principles"}, ""
         )
         self.assertIn('href="/#principles" class="active"', html)
+
+
+class BuildTests(unittest.TestCase):
+    def test_build_pages_and_assets(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            content = tmp_path / "content"
+            (content / "articles").mkdir(parents=True)
+            (content / "index.md").write_text(
+                "---\ntitle: Home\n---\n# Home\n", encoding="utf-8"
+            )
+            (content / "articles" / "post.md").write_text(
+                "---\ntitle: Post\ndate: 2026-02-01\nauthor: Ann\n---\nBody\n",
+                encoding="utf-8",
+            )
+            out = tmp_path / "dist"
+
+            written = build(content, ROOT / "templates", ROOT / "assets", out)
+
+            index = out / "index.html"
+            post = out / "articles" / "post.html"
+            self.assertTrue(index.exists())
+            self.assertTrue(post.exists())
+            self.assertIn("<title>Home</title>", index.read_text(encoding="utf-8"))
+            self.assertIn("<h1>Post</h1>", post.read_text(encoding="utf-8"))
+            self.assertTrue((out / "assets" / "css" / "style.css").exists())
+            self.assertEqual(written, sorted([index, post]))
 
 
 if __name__ == "__main__":
