@@ -84,10 +84,12 @@ Symmetric with the existing `collect_articles`. Reads front matter only.
   the existing behaviour in `collect_articles`.
 - `index.md` in `model-registry/` is excluded.
 
-Front matter is heterogeneous across the ten files: `params` is present in 8,
-`active_params` in 4, `context_length` in 7, `languages` in 5, `library` in 1.
-Every field except `name` and `organization` is therefore optional, and the
-template guards each with `{% if %}`.
+Front matter is uneven across the ten files, counted exactly: `params` is
+present in all 10, `active_params` in 9, `context_length` in 9, `languages` in 5,
+`library` in 1. `granite-4-2-30b` is the one dense model with no `active_params`
+and `glm-5-3-flash` the one with no `context_length`. Every field except `name`
+and `organization` is therefore treated as optional, and the template guards
+each with `{% if %}`.
 
 ### Template registration
 
