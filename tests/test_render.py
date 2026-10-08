@@ -167,6 +167,33 @@ class BuildTests(unittest.TestCase):
             self.assertIn("A post.", articles_index)
             self.assertNotIn("/articles/index.html", articles_index)
 
+    def test_registry_index_links_to_models(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            content = self.make_content(tmp_path)
+            registry = content / "model-registry"
+            registry.mkdir()
+            (registry / "index.md").write_text(
+                "---\ntitle: Registry\ntemplate: registry\n---\nIntro.\n",
+                encoding="utf-8",
+            )
+            (registry / "alpha.md").write_text(
+                "---\nname: Alpha\norganization: Org\n"
+                "release: \"2026\"\nsummary: The alpha model.\n---\nBody\n",
+                encoding="utf-8",
+            )
+            out = tmp_path / "dist"
+
+            build(content, ROOT / "templates", ROOT / "assets", out)
+
+            index = (out / "model-registry" / "index.html").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn('href="/model-registry/alpha/"', index)
+            self.assertIn("Alpha", index)
+            self.assertIn("The alpha model.", index)
+            self.assertTrue((out / "model-registry" / "alpha" / "index.html").exists())
+
     def test_nested_page_outside_articles(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)

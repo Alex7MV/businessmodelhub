@@ -9,6 +9,7 @@ VALID_TEMPLATES = {
     "page": "page.html",
     "article": "article.html",
     "articles": "articles.html",
+    "registry": "registry.html",
 }
 DEFAULT_TEMPLATE = "page.html"
 ARTICLE_DIR = "articles"
@@ -155,13 +156,14 @@ def collect_registry(content_dir):
     return collected
 
 
-def render_document(env, template_name, meta, body_html, articles=()):
+def render_document(env, template_name, meta, body_html, articles=(), registry=()):
     template = env.get_template(template_name)
     return template.render(
         page=meta,
         content=body_html,
         nav_active=meta.get("nav_active"),
         articles=articles,
+        registry=registry,
     )
 
 
@@ -187,6 +189,7 @@ def build(content_dir, templates_dir, assets_dir, out_dir):
     )
 
     articles = collect_articles(content_dir)
+    registry = collect_registry(content_dir)
 
     written = []
     for source in sorted(content_dir.rglob("*.md")):
@@ -194,7 +197,9 @@ def build(content_dir, templates_dir, assets_dir, out_dir):
         meta, body = parse_front_matter(source.read_text(encoding="utf-8"))
         body_html = markdown_to_html(body)
         template_name = select_template(rel_path, meta)
-        html = render_document(env, template_name, meta, body_html, articles=articles)
+        html = render_document(
+            env, template_name, meta, body_html, articles=articles, registry=registry
+        )
         target = output_path(out_dir, rel_path)
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(html, encoding="utf-8")
