@@ -116,6 +116,16 @@ def render_document(env, template_name, meta, body_html):
     )
 
 
+def output_path(out_dir, rel_path):
+    """Map content/<dir>/<stem>.md to its dist index.html location.
+
+    index.md -> <dir>/index.html; anything else -> <dir>/<stem>/index.html.
+    """
+    if rel_path.stem == "index":
+        return out_dir / rel_path.parent / "index.html"
+    return out_dir / rel_path.parent / rel_path.stem / "index.html"
+
+
 def build(content_dir, templates_dir, assets_dir, out_dir):
     content_dir = Path(content_dir)
     templates_dir = Path(templates_dir)
@@ -134,7 +144,7 @@ def build(content_dir, templates_dir, assets_dir, out_dir):
         body_html = markdown_to_html(body)
         template_name = select_template(rel_path, meta)
         html = render_document(env, template_name, meta, body_html)
-        target = out_dir / rel_path.with_suffix(".html")
+        target = output_path(out_dir, rel_path)
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(html, encoding="utf-8")
         written.append(target)
