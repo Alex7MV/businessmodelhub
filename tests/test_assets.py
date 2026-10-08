@@ -20,6 +20,12 @@ class AssetTests(unittest.TestCase):
         self.assertIn(".article-card", css)
         self.assertIn(".article-tags", css)
 
+    def test_css_wraps_long_code_blocks(self):
+        css = (ROOT / "assets" / "css" / "style.css").read_text(encoding="utf-8")
+        self.assertIn("pre", css)
+        self.assertIn("white-space: pre-wrap", css)
+        self.assertIn("overflow-wrap", css)
+
 
 if __name__ == "__main__":
     unittest.main()

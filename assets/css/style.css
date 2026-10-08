@@ -293,11 +293,47 @@
             color: var(--accent);
         }
 
+        .article-body pre,
+        .page-body pre {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 1.25rem 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #aab6c8;
+        }
+
+        .article-body pre code,
+        .page-body pre code {
+            background: none;
+            border: 0;
+            padding: 0;
+            font-size: inherit;
+        }
+
+        .article-body blockquote,
+        .page-body blockquote {
+            border-left: 2px solid var(--accent);
+            padding-left: 1rem;
+            color: var(--muted);
+        }
+
+        .article-body ul,
+        .article-body ol,
+        .page-body ul,
+        .page-body ol {
+            margin: 0 0 1rem 1.25rem;
+        }
+
         .nav-links a.active {
             color: var(--accent);
         }
 
-@media (max-width: 600px) {
+        @media (max-width: 600px) {
             .page-head,
             .article-body,
             .page-body {
