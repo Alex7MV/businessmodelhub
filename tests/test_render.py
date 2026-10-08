@@ -152,6 +152,21 @@ class BuildTests(unittest.TestCase):
                 written, sorted([index, articles_index, post])
             )
 
+    def test_articles_index_links_to_articles(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            content = self.make_content(tmp_path)
+            out = tmp_path / "dist"
+
+            build(content, ROOT / "templates", ROOT / "assets", out)
+
+            articles_index = (out / "articles" / "index.html").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn('href="/articles/post/"', articles_index)
+            self.assertIn("A post.", articles_index)
+            self.assertNotIn("/articles/index.html", articles_index)
+
     def test_nested_page_outside_articles(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)

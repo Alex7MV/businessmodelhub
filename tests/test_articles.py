@@ -2,7 +2,19 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from render import collect_articles
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+
+from render import collect_articles, render_document
+
+ROOT = Path(__file__).resolve().parent.parent
+TEMPLATES_DIR = ROOT / "templates"
+
+
+def make_env():
+    return Environment(
+        loader=FileSystemLoader(str(TEMPLATES_DIR)),
+        autoescape=select_autoescape(["html", "xml"]),
+    )
 
 
 class CollectArticlesTests(unittest.TestCase):
@@ -111,6 +123,68 @@ class CollectArticlesTests(unittest.TestCase):
             content = Path(tmp) / "content"
             content.mkdir()
             self.assertEqual(collect_articles(content), [])
+
+
+class ArticlesTemplateTests(unittest.TestCase):
+    def render_index(self, articles):
+        return render_document(
+            make_env(),
+            "articles.html",
+            {"title": "Articles", "description": "Long-form articles."},
+            "<p>Intro.</p>",
+            articles=articles,
+        )
+
+    def test_renders_card_per_article(self):
+        html = self.render_index(
+            [
+                {
+                    "url": "/articles/post/",
+                    "title": "A Post",
+                    "date": "2026-02-01",
+                    "summary": "Short summary.",
+                    "tags": ["methodology", "verification"],
+                }
+            ]
+        )
+        self.assertIn("<h1>Articles</h1>", html)
+        self.assertIn('href="/articles/post/"', html)
+        self.assertIn("A Post", html)
+        self.assertIn("Short summary.", html)
+        self.assertIn('<time datetime="2026-02-01">2026-02-01</time>', html)
+        self.assertIn("methodology", html)
+        self.assertIn("verification", html)
+
+    def test_empty_list_renders_no_cards(self):
+        html = self.render_index([])
+        self.assertIn("<h1>Articles</h1>", html)
+        self.assertIn("Intro.", html)
+        self.assertNotIn("article-card", html)
+
+    def test_article_without_date_or_summary(self):
+        html = self.render_index(
+            [
+                {
+                    "url": "/articles/bare/",
+                    "title": "Bare",
+                    "date": "",
+                    "summary": "",
+                    "tags": [],
+                }
+            ]
+        )
+        self.assertIn("Bare", html)
+        self.assertNotIn("<time", html)
+
+    def test_nav_active_articles(self):
+        html = render_document(
+            make_env(),
+            "articles.html",
+            {"title": "Articles", "nav_active": "articles"},
+            "",
+            articles=[],
+        )
+        self.assertIn('href="/articles/" class="active"', html)
 
 
 if __name__ == "__main__":

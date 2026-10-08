@@ -5,7 +5,11 @@ import markdown as markdown_lib
 import yaml
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-VALID_TEMPLATES = {"page": "page.html", "article": "article.html"}
+VALID_TEMPLATES = {
+    "page": "page.html",
+    "article": "article.html",
+    "articles": "articles.html",
+}
 DEFAULT_TEMPLATE = "page.html"
 ARTICLE_DIR = "articles"
 ARTICLE_INDEX = "index.md"
@@ -107,12 +111,13 @@ def collect_articles(content_dir):
     return _sort_articles(collected)
 
 
-def render_document(env, template_name, meta, body_html):
+def render_document(env, template_name, meta, body_html, articles=()):
     template = env.get_template(template_name)
     return template.render(
         page=meta,
         content=body_html,
         nav_active=meta.get("nav_active"),
+        articles=articles,
     )
 
 
@@ -137,13 +142,15 @@ def build(content_dir, templates_dir, assets_dir, out_dir):
         autoescape=select_autoescape(["html", "xml"]),
     )
 
+    articles = collect_articles(content_dir)
+
     written = []
     for source in sorted(content_dir.rglob("*.md")):
         rel_path = source.relative_to(content_dir)
         meta, body = parse_front_matter(source.read_text(encoding="utf-8"))
         body_html = markdown_to_html(body)
         template_name = select_template(rel_path, meta)
-        html = render_document(env, template_name, meta, body_html)
+        html = render_document(env, template_name, meta, body_html, articles=articles)
         target = output_path(out_dir, rel_path)
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(html, encoding="utf-8")
