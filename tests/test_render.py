@@ -115,30 +115,71 @@ class RenderDocumentTests(unittest.TestCase):
 
 
 class BuildTests(unittest.TestCase):
+    def make_content(self, tmp_path):
+        content = tmp_path / "content"
+        (content / "articles").mkdir(parents=True)
+        (content / "index.md").write_text(
+            "---\ntitle: Home\n---\n# Home\n", encoding="utf-8"
+        )
+        (content / "articles" / "index.md").write_text(
+            "---\ntitle: Articles\ntemplate: articles\n---\nIntro.\n",
+            encoding="utf-8",
+        )
+        (content / "articles" / "post.md").write_text(
+            "---\ntitle: Post\ndate: 2026-02-01\nsummary: A post.\n---\nBody\n",
+            encoding="utf-8",
+        )
+        return content
+
     def test_build_pages_and_assets(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
-            content = tmp_path / "content"
-            (content / "articles").mkdir(parents=True)
-            (content / "index.md").write_text(
-                "---\ntitle: Home\n---\n# Home\n", encoding="utf-8"
-            )
-            (content / "articles" / "post.md").write_text(
-                "---\ntitle: Post\ndate: 2026-02-01\nauthor: Ann\n---\nBody\n",
-                encoding="utf-8",
-            )
+            content = self.make_content(tmp_path)
             out = tmp_path / "dist"
 
             written = build(content, ROOT / "templates", ROOT / "assets", out)
 
             index = out / "index.html"
-            post = out / "articles" / "post.html"
+            articles_index = out / "articles" / "index.html"
+            post = out / "articles" / "post" / "index.html"
             self.assertTrue(index.exists())
+            self.assertTrue(articles_index.exists())
             self.assertTrue(post.exists())
             self.assertIn("<title>Home</title>", index.read_text(encoding="utf-8"))
             self.assertIn("<h1>Post</h1>", post.read_text(encoding="utf-8"))
             self.assertTrue((out / "assets" / "css" / "style.css").exists())
-            self.assertEqual(written, sorted([index, post]))
+            self.assertEqual(
+                written, sorted([index, articles_index, post])
+            )
+
+    def test_articles_index_links_to_articles(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            content = self.make_content(tmp_path)
+            out = tmp_path / "dist"
+
+            build(content, ROOT / "templates", ROOT / "assets", out)
+
+            articles_index = (out / "articles" / "index.html").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn('href="/articles/post/"', articles_index)
+            self.assertIn("A post.", articles_index)
+            self.assertNotIn("/articles/index.html", articles_index)
+
+    def test_nested_page_outside_articles(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            content = self.make_content(tmp_path)
+            (content / "guides").mkdir()
+            (content / "guides" / "start.md").write_text(
+                "---\ntitle: Start\n---\nBody\n", encoding="utf-8"
+            )
+            out = tmp_path / "dist"
+
+            build(content, ROOT / "templates", ROOT / "assets", out)
+
+            self.assertTrue((out / "guides" / "start" / "index.html").exists())
 
 
 if __name__ == "__main__":

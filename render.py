@@ -5,9 +5,14 @@ import markdown as markdown_lib
 import yaml
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-VALID_TEMPLATES = {"page": "page.html", "article": "article.html"}
+VALID_TEMPLATES = {
+    "page": "page.html",
+    "article": "article.html",
+    "articles": "articles.html",
+}
 DEFAULT_TEMPLATE = "page.html"
 ARTICLE_DIR = "articles"
+ARTICLE_INDEX = "index.md"
 
 
 class _FrontMatterLoader(yaml.SafeLoader):
@@ -62,13 +67,68 @@ def select_template(rel_path, meta):
     return DEFAULT_TEMPLATE
 
 
-def render_document(env, template_name, meta, body_html):
+def _sort_articles(collected):
+    """Newest dated article first; undated last, then by title."""
+    dated = [item for item in collected if item["date"]]
+    undated = [item for item in collected if not item["date"]]
+    dated.sort(key=lambda item: item["date"], reverse=True)
+    undated.sort(key=lambda item: item["title"])
+    return dated + undated
+
+
+def collect_articles(content_dir):
+    """Article metadata from content/articles/*.md, excluding index.md.
+
+    Returns a list of dicts: {url, title, date, summary, tags}, newest
+    first. Articles without a date are placed after all dated articles,
+    sorted among themselves by title ascending. An article without a title
+    raises ValueError.
+    """
+    articles_dir = Path(content_dir) / ARTICLE_DIR
+    if not articles_dir.is_dir():
+        return []
+
+    collected = []
+    for source in sorted(articles_dir.glob("*.md")):
+        if source.name == ARTICLE_INDEX:
+            continue
+        meta, _ = parse_front_matter(source.read_text(encoding="utf-8"))
+        title = meta.get("title")
+        if not title:
+            raise ValueError(
+                "article %s has no 'title' in its front matter" % source.name
+            )
+        collected.append(
+            {
+                "url": "/%s/%s/" % (ARTICLE_DIR, source.stem),
+                "title": title,
+                "date": meta.get("date") or "",
+                "summary": meta.get("summary") or "",
+                "tags": meta.get("tags") or [],
+            }
+        )
+
+    return _sort_articles(collected)
+
+
+def render_document(env, template_name, meta, body_html, articles=()):
     template = env.get_template(template_name)
     return template.render(
         page=meta,
         content=body_html,
         nav_active=meta.get("nav_active"),
+        articles=articles,
     )
+
+
+def output_path(out_dir, rel_path):
+    """Map content/<dir>/<stem>.md to its dist index.html location.
+
+    index.md -> <dir>/index.html; anything else -> <dir>/<stem>/index.html.
+    """
+    if rel_path.stem == "index":
+        return out_dir / rel_path.parent / "index.html"
+    return out_dir / rel_path.parent / rel_path.stem / "index.html"
 
 
 def build(content_dir, templates_dir, assets_dir, out_dir):
@@ -82,14 +142,16 @@ def build(content_dir, templates_dir, assets_dir, out_dir):
         autoescape=select_autoescape(["html", "xml"]),
     )
 
+    articles = collect_articles(content_dir)
+
     written = []
     for source in sorted(content_dir.rglob("*.md")):
         rel_path = source.relative_to(content_dir)
         meta, body = parse_front_matter(source.read_text(encoding="utf-8"))
         body_html = markdown_to_html(body)
         template_name = select_template(rel_path, meta)
-        html = render_document(env, template_name, meta, body_html)
-        target = out_dir / rel_path.with_suffix(".html")
+        html = render_document(env, template_name, meta, body_html, articles=articles)
+        target = output_path(out_dir, rel_path)
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(html, encoding="utf-8")
         written.append(target)

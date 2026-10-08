@@ -14,6 +14,12 @@ class AssetTests(unittest.TestCase):
         self.assertIn('querySelector(".footer-email")', js)
         self.assertIn('"mailto:"', js)
 
+    def test_css_contains_article_card_styles(self):
+        css = (ROOT / "assets" / "css" / "style.css").read_text(encoding="utf-8")
+        self.assertIn(".article-list", css)
+        self.assertIn(".article-card", css)
+        self.assertIn(".article-tags", css)
+
 
 if __name__ == "__main__":
     unittest.main()

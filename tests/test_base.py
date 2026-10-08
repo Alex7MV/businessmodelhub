@@ -27,6 +27,14 @@ class BaseTemplateTests(unittest.TestCase):
         html = render("base.html", nav_active="principles")
         self.assertIn('href="/#principles" class="active"', html)
 
+    def test_nav_has_articles_link(self):
+        html = render("base.html")
+        self.assertIn('href="/articles/"', html)
+
+    def test_nav_active_marks_articles(self):
+        html = render("base.html", nav_active="articles")
+        self.assertIn('href="/articles/" class="active"', html)
+
 
 if __name__ == "__main__":
     unittest.main()
