@@ -1,6 +1,7 @@
 ---
 name: Qwen3.6-35B-A3B
 url: https://huggingface.co/Qwen/Qwen3.6-35B-A3B
+summary: "First open-weight variant of the Qwen3.6 series: a causal language model with a vision encoder, 35B total parameters, and a 262,144-token context extensible to about 1M."
 organization: Qwen
 params: 35B (MoE)
 active_params: 3B

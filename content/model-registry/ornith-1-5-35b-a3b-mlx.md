@@ -1,6 +1,7 @@
 ---
 name: Ornith-1.5-35B-A3B (MLX)
 url: https://huggingface.co/ornith-ai/Ornith-1.5-35B-A3B-MLX
+summary: "Mid-size Mixture-of-Experts member of the Ornith-1.5 family in Apple MLX format, activating roughly 3B parameters per token."
 organization: Ornith AI
 params: ~35B (MoE)
 active_params: ~3B

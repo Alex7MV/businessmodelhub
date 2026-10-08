@@ -1,6 +1,7 @@
 ---
 name: DeepSeek-V4-Flash
 url: https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash
+summary: "Mixture-of-Experts language model from the DeepSeek-V4 preview series: 284B total parameters, 13B activated per token, one-million-token context."
 organization: DeepSeek-AI
 params: 284B (MoE)
 active_params: 13B

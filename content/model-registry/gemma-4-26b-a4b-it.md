@@ -1,6 +1,7 @@
 ---
 name: Gemma 4 26B A4B IT
 url: https://huggingface.co/google/gemma-4-26B-A4B-it
+summary: "Mixture-of-Experts member of Google's Gemma 4 family of open multimodal models, handling text and image input and generating text."
 organization: Google DeepMind
 params: 25.2B (MoE)
 active_params: 3.8B

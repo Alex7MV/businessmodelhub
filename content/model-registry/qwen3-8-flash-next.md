@@ -1,6 +1,7 @@
 ---
 name: Qwen3.8-Flash-Next
 url: https://huggingface.co/Qwen/Qwen3.8-Flash-Next
+summary: "Experimental preview of the architecture that will underpin Qwen4, a rethinking of how the core components of modern LLMs interact at scale."
 organization: Qwen
 params: 125B (+51B n-gram embedding, +4B MTP)
 active_params: 6B

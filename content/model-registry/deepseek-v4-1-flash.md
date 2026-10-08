@@ -1,6 +1,7 @@
 ---
 name: DeepSeek-V4.1-Flash
 url: https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash
+summary: "Multimodal Mixture-of-Experts model with a 552B backbone and a one-million-token context window; processes images and text natively."
 organization: DeepSeek-AI
 params: 552B backbone (MoE)
 active_params: 8B prefill / 16B decode

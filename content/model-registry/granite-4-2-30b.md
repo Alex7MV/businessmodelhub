@@ -1,6 +1,7 @@
 ---
 name: Granite-4.2-30B
 url: https://huggingface.co/ibm-granite/granite-4.2-30b
+summary: "IBM's flagship Granite 4.2 reasoning model: a decoder-only dense transformer with 30B parameters, built-in chain-of-thought, and a 512K context window."
 organization: IBM Granite Team
 params: 30B (dense)
 context_length: "128K native, extensible to 512K"

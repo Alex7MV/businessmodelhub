@@ -1,6 +1,7 @@
 ---
 name: NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16
 url: https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16
+summary: "General-purpose reasoning and chat model from NVIDIA; this BF16 release is the full-precision reference checkpoint intended for customization and post-training."
 organization: NVIDIA
 params: 30B (MoE)
 active_params: 3B

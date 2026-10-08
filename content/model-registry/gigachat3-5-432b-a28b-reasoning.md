@@ -1,6 +1,7 @@
 ---
 name: GigaChat 3.5 Reasoning (432B-A28B)
 url: https://huggingface.co/ai-sage/GigaChat3.5-432B-A28B-Reasoning
+summary: "First GigaChat model with full reasoning, trained with online reinforcement learning; largest gains in mathematics, code, and structured output."
 organization: ai-sage (GigaChat)
 params: 432B (MoE)
 active_params: 28B

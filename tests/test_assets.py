@@ -26,6 +26,10 @@ class AssetTests(unittest.TestCase):
         self.assertIn("white-space: pre-wrap", css)
         self.assertIn("overflow-wrap", css)
 
+    def test_css_contains_registry_card_styles(self):
+        css = (ROOT / "assets" / "css" / "style.css").read_text(encoding="utf-8")
+        self.assertIn(".article-card-params", css)
+
 
 if __name__ == "__main__":
     unittest.main()

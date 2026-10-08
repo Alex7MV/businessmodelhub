@@ -1,6 +1,7 @@
 ---
 name: GLM-5.3-Flash
 url: https://huggingface.co/zai-org/GLM-5.3-Flash
+summary: "First natively multimodal model in the GLM-5 series: 320B total parameters with 18B active, at one-tenth the price of GLM-5.2."
 organization: Z.ai (zai-org)
 params: 320B (MoE)
 active_params: 18B
