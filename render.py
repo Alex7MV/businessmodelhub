@@ -13,6 +13,7 @@ VALID_TEMPLATES = {
 DEFAULT_TEMPLATE = "page.html"
 ARTICLE_DIR = "articles"
 ARTICLE_INDEX = "index.md"
+REGISTRY_DIR = "model-registry"
 
 
 class _FrontMatterLoader(yaml.SafeLoader):
@@ -109,6 +110,49 @@ def collect_articles(content_dir):
         )
 
     return _sort_articles(collected)
+
+
+def collect_registry(content_dir):
+    """Model metadata from content/model-registry/*.md, excluding index.md.
+
+    Returns a list of dicts with keys url, name, organization, params,
+    active_params, context_length, license, tasks, release and summary,
+    sorted by organization then name, both case-insensitive. Absent
+    fields become "" or []. A model without a name raises ValueError.
+    """
+    registry_dir = Path(content_dir) / REGISTRY_DIR
+    if not registry_dir.is_dir():
+        return []
+
+    collected = []
+    for source in sorted(registry_dir.glob("*.md")):
+        if source.name == ARTICLE_INDEX:
+            continue
+        meta, _ = parse_front_matter(source.read_text(encoding="utf-8"))
+        name = meta.get("name")
+        if not name:
+            raise ValueError(
+                "model %s has no 'name' in its front matter" % source.name
+            )
+        collected.append(
+            {
+                "url": "/%s/%s/" % (REGISTRY_DIR, source.stem),
+                "name": name,
+                "organization": meta.get("organization") or "",
+                "params": meta.get("params") or "",
+                "active_params": meta.get("active_params") or "",
+                "context_length": meta.get("context_length") or "",
+                "license": meta.get("license") or "",
+                "tasks": meta.get("tasks") or [],
+                "release": meta.get("release") or "",
+                "summary": meta.get("summary") or "",
+            }
+        )
+
+    collected.sort(
+        key=lambda item: (item["organization"].lower(), item["name"].lower())
+    )
+    return collected
 
 
 def render_document(env, template_name, meta, body_html, articles=()):
