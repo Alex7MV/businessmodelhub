@@ -10,5 +10,33 @@
 
 <main class="page-body">
 {{ content|safe }}
+
+{% if registry %}
+<ul class="article-list">
+    {% for model in registry %}
+    <li class="article-card">
+        {% if model.organization or model.release or model.license %}
+        <div class="article-card-meta">
+            {%- if model.organization %}<span>{{ model.organization }}</span>{% endif %}
+            {%- if model.release %}<span>{{ model.release }}</span>{% endif %}
+            {%- if model.license %}<span>{{ model.license }}</span>{% endif %}
+        </div>
+        {% endif %}
+        <h2><a href="{{ model.url }}">{{ model.name }}</a></h2>
+        {% if model.params %}
+        <p class="article-card-params">
+            {{ model.params }}{% if model.active_params %} &middot; {{ model.active_params }} active{% endif %}
+        </p>
+        {% endif %}
+        {% if model.summary %}<p>{{ model.summary }}</p>{% endif %}
+        {% if model.tasks %}
+        <p class="article-tags">
+            {%- for task in model.tasks %}<span class="article-tag">{{ task }}</span>{% endfor %}
+        </p>
+        {% endif %}
+    </li>
+    {% endfor %}
+</ul>
+{% endif %}
 </main>
 {% endblock %}

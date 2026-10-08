@@ -2,7 +2,19 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from render import collect_registry
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+
+from render import collect_registry, render_document
+
+ROOT = Path(__file__).resolve().parent.parent
+TEMPLATES_DIR = ROOT / "templates"
+
+
+def make_env():
+    return Environment(
+        loader=FileSystemLoader(str(TEMPLATES_DIR)),
+        autoescape=select_autoescape(["html", "xml"]),
+    )
 
 
 class CollectRegistryTests(unittest.TestCase):
@@ -109,6 +121,70 @@ class CollectRegistryTests(unittest.TestCase):
             content = Path(tmp) / "content"
             content.mkdir()
             self.assertEqual(collect_registry(content), [])
+
+
+class RegistryTemplateTests(unittest.TestCase):
+    def make_model(self, **overrides):
+        model = {
+            "url": "/model-registry/alpha/",
+            "name": "Alpha",
+            "organization": "Test Org",
+            "params": "70B (MoE)",
+            "active_params": "3B",
+            "context_length": "128K tokens",
+            "license": "MIT",
+            "tasks": ["text-generation"],
+            "release": "2026",
+            "summary": "A test model.",
+        }
+        model.update(overrides)
+        return model
+
+    def render_index(self, models):
+        return render_document(
+            make_env(),
+            "registry.html",
+            {"title": "Registry", "description": "Verified models."},
+            "<p>Intro.</p>",
+            registry=models,
+        )
+
+    def test_renders_card_per_model(self):
+        html = self.render_index([self.make_model()])
+        self.assertIn("<h1>Registry</h1>", html)
+        self.assertIn('href="/model-registry/alpha/"', html)
+        self.assertIn("Alpha", html)
+        self.assertIn("Test Org", html)
+        self.assertIn("70B (MoE)", html)
+        self.assertIn("3B", html)
+        self.assertIn("MIT", html)
+        self.assertIn("2026", html)
+        self.assertIn("A test model.", html)
+        self.assertIn("text-generation", html)
+
+    def test_empty_list_renders_no_cards(self):
+        html = self.render_index([])
+        self.assertIn("<h1>Registry</h1>", html)
+        self.assertIn("Intro.", html)
+        self.assertNotIn("article-card", html)
+
+    def test_model_without_optional_fields(self):
+        html = self.render_index(
+            [self.make_model(params="", active_params="", summary="", tasks=[], license="")]
+        )
+        self.assertIn("Alpha", html)
+        self.assertNotIn("article-card-params", html)
+        self.assertNotIn("article-tags", html)
+
+    def test_nav_active_registry(self):
+        html = render_document(
+            make_env(),
+            "registry.html",
+            {"title": "Registry", "nav_active": "registry"},
+            "",
+            registry=[],
+        )
+        self.assertIn('href="/model-registry/" class="active"', html)
 
 
 if __name__ == "__main__":
