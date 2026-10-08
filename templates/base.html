@@ -16,10 +16,10 @@
 </head>
 <body class="{% block body_class %}{% endblock %}">
     <nav>
-        <a class="logo" href="/#verification">Business Model Hub</a>
+        <a class="logo" href="/#principles">Business Model Hub</a>
         <div class="nav-links">
-            <a href="/#verification"{% if nav_active == "verification" %} class="active"{% endif %}>Verification</a>
             <a href="/#principles"{% if nav_active == "principles" %} class="active"{% endif %}>Principles</a>
+            <a href="/model-registry/"{% if nav_active == "registry" %} class="active"{% endif %}>Registry</a>
             <a href="/articles/"{% if nav_active == "articles" %} class="active"{% endif %}>Articles</a>
             <a href="/#contact"{% if nav_active == "contact" %} class="active"{% endif %}>Contact</a>
         </div>

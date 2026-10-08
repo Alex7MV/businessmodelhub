@@ -66,6 +66,12 @@ class MarkdownTests(unittest.TestCase):
     def test_paragraph(self):
         self.assertIn("<p>text</p>", markdown_to_html("text"))
 
+    def test_homepage_principles_heading_carries_anchor(self):
+        source = (ROOT / "content" / "index.md").read_text(encoding="utf-8")
+        _, body = parse_front_matter(source)
+        html = markdown_to_html(body)
+        self.assertIn('id="principles"', html)
+
 
 class SelectTemplateTests(unittest.TestCase):
     def test_default_page(self):

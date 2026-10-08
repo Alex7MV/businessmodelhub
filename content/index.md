@@ -10,7 +10,7 @@ Business Model Hub (BMH) operates as an independent, non-profit industrial stand
 
 **[STATUS]:** Foundation Nodes Initializing — Ahead-of-Time (AOT) Verification Framework Setup.
 
-## Core Operational Principles of the Foundation
+## Core Operational Principles of the Foundation { #principles }
 
 ### 01 · End-to-End Chain of Custody (Dual-Verification Protocol)
 

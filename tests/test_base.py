@@ -10,8 +10,12 @@ class BaseTemplateTests(unittest.TestCase):
 
     def test_nav_links(self):
         html = render("base.html")
-        for href in ("/#verification", "/#principles", "/#contact"):
+        for href in ("/#principles", "/model-registry/", "/articles/", "/#contact"):
             self.assertIn('href="%s"' % href, html)
+
+    def test_nav_has_no_dead_verification_link(self):
+        html = render("base.html")
+        self.assertNotIn("/#verification", html)
 
     def test_footer_license_lines(self):
         html = render("base.html")
@@ -27,9 +31,9 @@ class BaseTemplateTests(unittest.TestCase):
         html = render("base.html", nav_active="principles")
         self.assertIn('href="/#principles" class="active"', html)
 
-    def test_nav_has_articles_link(self):
-        html = render("base.html")
-        self.assertIn('href="/articles/"', html)
+    def test_nav_active_marks_registry(self):
+        html = render("base.html", nav_active="registry")
+        self.assertIn('href="/model-registry/" class="active"', html)
 
     def test_nav_active_marks_articles(self):
         html = render("base.html", nav_active="articles")
