@@ -27,3 +27,7 @@ No model profile enters the verified BMH registry without passing a full automat
 ### 04 · Architecture-Specific Binary Sovereignty
 
 BMH systematically rejects bloated runtime abstraction layers and fat-binary deployments. The consortium facilitates isolated, hardware-mapped Ahead-of-Time (AOT) builds compiled strictly against specific compute targets (including NVIDIA Blackwell compute_120a, Ampere Desktop sm_86, and Embedded Jetson Unified Memory sm_87 architectures) ensuring zero runtime branch overhead and up to 85% memory bus utilization on host nodes.
+
+## Articles
+
+Long-form material from the consortium — verification methodology, supply-chain post-mortems, and architecture reviews — lives in the [articles section](/articles/).
