@@ -54,6 +54,33 @@ class AssetTests(unittest.TestCase):
     def test_favicon_ico_exists(self):
         self.assertTrue((ROOT / "assets" / "images" / "favicon.ico").exists())
 
+    def test_css_contains_burger_and_sr_only(self):
+        css = (ROOT / "assets" / "css" / "style.css").read_text(encoding="utf-8")
+        self.assertIn(".nav-burger", css)
+        self.assertIn(".sr-only", css)
+
+    def test_desktop_overrides_closed_details(self):
+        css = (ROOT / "assets" / "css" / "style.css").read_text(encoding="utf-8")
+        block = re.search(r"@media \(min-width: 601px\)\s*\{(.*?)\n\s{8}\}", css, re.S)
+        self.assertIsNotNone(block, "no min-width 601px query in style.css")
+        self.assertIn(".nav-menu > .nav-links", block.group(1))
+        self.assertIn("content-visibility: visible", block.group(1))
+
+    def test_mobile_does_not_hide_nav_links(self):
+        css = (ROOT / "assets" / "css" / "style.css").read_text(encoding="utf-8")
+        block = re.search(r"@media \(max-width: 600px\)\s*\{(.*?)\n\s{8}\}", css, re.S)
+        self.assertIsNotNone(block, "no max-width 600px query in style.css")
+        # Scoped to the .nav-links rule itself: the block legitimately contains
+        # other `display: none` rules, e.g. hiding the details marker.
+        hiding = re.search(
+            r"\.nav-links\s*\{[^}]*display:\s*none", block.group(1), re.S
+        )
+        self.assertIsNone(
+            hiding,
+            "mobile query still hides .nav-links: %s"
+            % (hiding.group(0) if hiding else ""),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
