@@ -35,6 +35,17 @@ class BaseTemplateTests(unittest.TestCase):
         self.assertIn('href="/assets/images/favicon-16x16.png"', html)
         self.assertIn('href="/assets/images/site.webmanifest"', html)
 
+    def test_nav_uses_details_disclosure(self):
+        html = render("base.html")
+        self.assertIn('<details class="nav-menu">', html)
+        self.assertIn("<summary>", html)
+        self.assertIn('class="nav-burger"', html)
+
+    def test_nav_summary_has_accessible_name(self):
+        html = render("base.html")
+        self.assertIn('aria-hidden="true"', html)
+        self.assertIn('<span class="sr-only">Menu</span>', html)
+
     def test_nav_active_marks_link(self):
         html = render("base.html", nav_active="principles")
         self.assertIn('href="/#principles" class="active"', html)
