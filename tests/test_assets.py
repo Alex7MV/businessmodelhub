@@ -63,8 +63,12 @@ class AssetTests(unittest.TestCase):
         css = (ROOT / "assets" / "css" / "style.css").read_text(encoding="utf-8")
         block = re.search(r"@media \(min-width: 601px\)\s*\{(.*?)\n\s{8}\}", css, re.S)
         self.assertIsNotNone(block, "no min-width 601px query in style.css")
-        self.assertIn(".nav-menu > .nav-links", block.group(1))
-        self.assertIn("content-visibility: visible", block.group(1))
+        body = block.group(1)
+        self.assertIn(".nav-menu > .nav-links", body)
+        self.assertIn("content-visibility: visible", body)
+        # Load-bearing: Chrome hides closed details through this pseudo-element.
+        # Overriding only the child leaves the <details> box at zero width.
+        self.assertIn(".nav-menu::details-content", body)
 
     def test_mobile_does_not_hide_nav_links(self):
         css = (ROOT / "assets" / "css" / "style.css").read_text(encoding="utf-8")

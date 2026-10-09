@@ -59,11 +59,15 @@ position in the tree changes.
 
 ## Desktop, above 600px
 
-Two rules in `@media (min-width: 601px)`:
+Three rules in `@media (min-width: 601px)`:
 
 ```css
 .nav-menu > summary {
     display: none;
+}
+
+.nav-menu::details-content {
+    content-visibility: visible;
 }
 
 .nav-menu > .nav-links {
@@ -73,9 +77,16 @@ Two rules in `@media (min-width: 601px)`:
 ```
 
 A closed `<details>` hides its children through a user-agent rule. Overriding it
-needs both declarations: `display` for the classic UA rule, and
-`content-visibility` for the newer Chrome behaviour where closed details are
-hidden via `content-visibility: hidden` rather than `display`.
+needs both a rule on the child and one on the `::details-content` pseudo-element.
+
+The pseudo-element rule is load-bearing, not belt-and-braces. Measured in Chrome:
+with only the child overridden, `.nav-links` reports `display: flex` and four
+children, but its bounding box is **0 × 18** — the `<details>` box itself stays
+collapsed to zero width, so the links are laid out and then clipped. Adding
+`.nav-menu::details-content { content-visibility: visible; }` gives the nav a
+315px-wide box with the links aligned to the right edge. Chrome exposes the
+closed-details content through `::details-content`; overriding `display` on the
+child does not reach it.
 
 **This is the one part of the design that cannot be verified without a real
 browser.** If a specific browser keeps the links hidden on desktop, the fix is
@@ -140,10 +151,17 @@ The nav's `max-width: 900px` is unaffected.
 
 ## Verification limits
 
-The build and the test suite can confirm the markup and the CSS rules exist, but
-cannot confirm rendering. Two things need a real browser:
+The build and the test suite confirm the markup and the CSS rules exist. Layout
+and painting were verified separately by driving headless Chrome against the
+built site and reading `getBoundingClientRect`, `getComputedStyle` and
+`elementFromPoint`:
 
-- the closed `details` override on desktop
-- the panel position and burger appearance at 375px
+- desktop at 1400px: `.nav-links` 315px wide, inside the 900px nav, aligned to
+  its right edge
+- mobile in a 375px iframe: burger painted; links not painted while closed; with
+  the disclosure open the panel is 285 × 194, sits below the bar, is a flex
+  column, and all four links paint
 
-Both are called out in the design above rather than claimed as verified.
+Note that `getBoundingClientRect` alone is not a visibility test here — under
+`content-visibility: hidden` an element keeps its size while painting nothing.
+The hit test through `elementFromPoint` is what distinguishes the two states.

@@ -469,10 +469,17 @@
             margin-bottom: 0.75rem;
         }
 
-        /* Nav disclosure: keep links visible on desktop */
+        /* Nav disclosure: keep links visible on desktop.
+           Chrome hides the contents of a closed <details> via the
+           ::details-content pseudo-element, so overriding the child alone
+           leaves the <details> box collapsed to zero width. */
         @media (min-width: 601px) {
             .nav-menu > summary {
                 display: none;
+            }
+
+            .nav-menu::details-content {
+                content-visibility: visible;
             }
 
             .nav-menu > .nav-links {
