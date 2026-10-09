@@ -15,6 +15,8 @@ DEFAULT_TEMPLATE = "page.html"
 ARTICLE_DIR = "articles"
 ARTICLE_INDEX = "index.md"
 REGISTRY_DIR = "model-registry"
+ERROR_STEM = "404"
+SITE_URL = "https://businessmodelhub.org"
 
 
 class _FrontMatterLoader(yaml.SafeLoader):
@@ -168,13 +170,51 @@ def render_document(env, template_name, meta, body_html, articles=(), registry=(
 
 
 def output_path(out_dir, rel_path):
-    """Map content/<dir>/<stem>.md to its dist index.html location.
+    """Map a content source path to its dist location.
 
-    index.md -> <dir>/index.html; anything else -> <dir>/<stem>/index.html.
+    index.md -> <dir>/index.html; 404.md -> <dir>/404.html;
+    anything else -> <dir>/<stem>/index.html.
     """
     if rel_path.stem == "index":
         return out_dir / rel_path.parent / "index.html"
+    if rel_path.stem == ERROR_STEM:
+        return out_dir / rel_path.parent / (ERROR_STEM + ".html")
     return out_dir / rel_path.parent / rel_path.stem / "index.html"
+
+
+def url_for_output(out_dir, path):
+    """Turn a written output path into its site-root-relative URL path."""
+    rel = Path(path).relative_to(out_dir).as_posix()
+    if rel == "index.html":
+        return "/"
+    if rel.endswith("/index.html"):
+        return "/" + rel[: -len("/index.html")] + "/"
+    return "/" + rel
+
+
+def write_sitemap(out_dir, written):
+    """Write sitemap.xml from the pages that were actually built."""
+    entries = []
+    for path in written:
+        if path.name == "404.html":
+            continue
+        url = SITE_URL + url_for_output(out_dir, path)
+        entries.append(
+            "  <url><loc>%s</loc></url>" % url.replace("&", "&amp;")
+        )
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        + "\n".join(entries)
+        + "\n</urlset>\n"
+    )
+    (out_dir / "sitemap.xml").write_text(xml, encoding="utf-8")
+
+
+def write_robots(out_dir):
+    """Write robots.txt at the site root pointing at the sitemap."""
+    text = "User-agent: *\nSitemap: %s/sitemap.xml\n" % SITE_URL
+    (out_dir / "robots.txt").write_text(text, encoding="utf-8")
 
 
 def build(content_dir, templates_dir, assets_dir, out_dir):
@@ -206,6 +246,8 @@ def build(content_dir, templates_dir, assets_dir, out_dir):
         written.append(target)
 
     shutil.copytree(assets_dir, out_dir / "assets", dirs_exist_ok=True)
+    write_sitemap(out_dir, written)
+    write_robots(out_dir)
     return sorted(written)
 
 

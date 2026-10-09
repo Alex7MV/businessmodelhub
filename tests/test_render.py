@@ -1,3 +1,4 @@
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -5,11 +6,14 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from render import (
+    SITE_URL,
     build,
     markdown_to_html,
+    output_path,
     parse_front_matter,
     render_document,
     select_template,
+    url_for_output,
 )
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -213,6 +217,143 @@ class BuildTests(unittest.TestCase):
             build(content, ROOT / "templates", ROOT / "assets", out)
 
             self.assertTrue((out / "guides" / "start" / "index.html").exists())
+
+
+class OutputPathTests(unittest.TestCase):
+    def test_index_stem_maps_to_directory_index(self):
+        out = Path("dist")
+        self.assertEqual(
+            output_path(out, Path("index.md")), out / "index.html"
+        )
+        self.assertEqual(
+            output_path(out, Path("articles/index.md")),
+            out / "articles" / "index.html",
+        )
+
+    def test_other_stems_map_to_their_own_directory(self):
+        out = Path("dist")
+        self.assertEqual(
+            output_path(out, Path("articles/post.md")),
+            out / "articles" / "post" / "index.html",
+        )
+
+    def test_404_stem_maps_to_root_file(self):
+        out = Path("dist")
+        self.assertEqual(
+            output_path(out, Path("404.md")), out / "404.html"
+        )
+
+    def test_site_url_has_no_trailing_slash(self):
+        self.assertFalse(SITE_URL.endswith("/"))
+        self.assertTrue(SITE_URL.startswith("https://"))
+
+    def test_url_for_output_uses_trailing_slash_for_index(self):
+        out = Path("dist")
+        self.assertEqual(url_for_output(out, out / "index.html"), "/")
+        self.assertEqual(
+            url_for_output(out, out / "articles" / "index.html"), "/articles/"
+        )
+        self.assertEqual(
+            url_for_output(out, out / "articles" / "post" / "index.html"),
+            "/articles/post/",
+        )
+
+    def test_url_for_output_keeps_non_index_files(self):
+        out = Path("dist")
+        self.assertEqual(url_for_output(out, out / "404.html"), "/404.html")
+
+
+class SitemapTests(unittest.TestCase):
+    def build_site(self, tmp_path):
+        content = tmp_path / "content"
+        (content / "articles").mkdir(parents=True)
+        (content / "index.md").write_text(
+            "---\ntitle: Home\n---\n# Home\n", encoding="utf-8"
+        )
+        (content / "404.md").write_text(
+            "---\ntitle: Not found\n---\nBody\n", encoding="utf-8"
+        )
+        (content / "articles" / "index.md").write_text(
+            "---\ntitle: Articles\ntemplate: articles\n---\nIntro.\n",
+            encoding="utf-8",
+        )
+        (content / "articles" / "post.md").write_text(
+            "---\ntitle: Post\n---\nBody\n", encoding="utf-8"
+        )
+        out = tmp_path / "dist"
+        build(content, ROOT / "templates", ROOT / "assets", out)
+        return out
+
+    def test_sitemap_is_written(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = self.build_site(Path(tmp))
+            self.assertTrue((out / "sitemap.xml").exists())
+
+    def test_sitemap_urls_are_absolute_and_end_in_slash(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = self.build_site(Path(tmp))
+            xml = (out / "sitemap.xml").read_text(encoding="utf-8")
+            for loc in re.findall(r"<loc>([^<]+)</loc>", xml):
+                self.assertTrue(loc.startswith(SITE_URL + "/"))
+                self.assertTrue(loc.endswith("/"))
+
+    def test_sitemap_lists_every_page_except_404(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = self.build_site(Path(tmp))
+            xml = (out / "sitemap.xml").read_text(encoding="utf-8")
+            locs = re.findall(r"<loc>([^<]+)</loc>", xml)
+            self.assertEqual(
+                sorted(locs),
+                sorted([SITE_URL + "/", SITE_URL + "/articles/",
+                        SITE_URL + "/articles/post/"]),
+            )
+            self.assertNotIn("404", xml)
+
+
+class RobotsTests(unittest.TestCase):
+    def build_real(self, tmp_path):
+        out = tmp_path / "dist"
+        build(ROOT / "content", ROOT / "templates", ROOT / "assets", out)
+        return out
+
+    def test_robots_is_written_at_site_root(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = self.build_real(Path(tmp))
+            self.assertTrue((out / "robots.txt").exists())
+
+    def test_robots_points_at_the_sitemap(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = self.build_real(Path(tmp))
+            robots = (out / "robots.txt").read_text(encoding="utf-8")
+            self.assertIn("Sitemap: %s/sitemap.xml" % SITE_URL, robots)
+            self.assertIn("User-agent: *", robots)
+
+
+class ErrorPageTests(unittest.TestCase):
+    def build_real(self, tmp_path):
+        out = tmp_path / "dist"
+        build(ROOT / "content", ROOT / "templates", ROOT / "assets", out)
+        return out
+
+    def test_404_page_is_written_at_root(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = self.build_real(Path(tmp))
+            self.assertTrue((out / "404.html").exists())
+            self.assertFalse((out / "404" / "index.html").exists())
+
+    def test_404_page_offers_all_sections(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = self.build_real(Path(tmp))
+            html = (out / "404.html").read_text(encoding="utf-8")
+            for href in ("/#principles", "/model-registry/", "/articles/",
+                         "/#contact"):
+                self.assertIn('href="%s"' % href, html)
+
+    def test_404_page_shows_a_visible_heading(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = self.build_real(Path(tmp))
+            html = (out / "404.html").read_text(encoding="utf-8")
+            self.assertIn("<h1>Page not found</h1>", html)
 
 
 if __name__ == "__main__":
