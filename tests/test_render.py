@@ -1,3 +1,4 @@
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -5,8 +6,10 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from render import (
+    SITE_URL,
     build,
     markdown_to_html,
+    output_path,
     parse_front_matter,
     render_document,
     select_template,
@@ -213,6 +216,35 @@ class BuildTests(unittest.TestCase):
             build(content, ROOT / "templates", ROOT / "assets", out)
 
             self.assertTrue((out / "guides" / "start" / "index.html").exists())
+
+
+class OutputPathTests(unittest.TestCase):
+    def test_index_stem_maps_to_directory_index(self):
+        out = Path("dist")
+        self.assertEqual(
+            output_path(out, Path("index.md")), out / "index.html"
+        )
+        self.assertEqual(
+            output_path(out, Path("articles/index.md")),
+            out / "articles" / "index.html",
+        )
+
+    def test_other_stems_map_to_their_own_directory(self):
+        out = Path("dist")
+        self.assertEqual(
+            output_path(out, Path("articles/post.md")),
+            out / "articles" / "post" / "index.html",
+        )
+
+    def test_404_stem_maps_to_root_file(self):
+        out = Path("dist")
+        self.assertEqual(
+            output_path(out, Path("404.md")), out / "404.html"
+        )
+
+    def test_site_url_has_no_trailing_slash(self):
+        self.assertFalse(SITE_URL.endswith("/"))
+        self.assertTrue(SITE_URL.startswith("https://"))
 
 
 if __name__ == "__main__":

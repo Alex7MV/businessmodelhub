@@ -15,6 +15,8 @@ DEFAULT_TEMPLATE = "page.html"
 ARTICLE_DIR = "articles"
 ARTICLE_INDEX = "index.md"
 REGISTRY_DIR = "model-registry"
+ERROR_STEM = "404"
+SITE_URL = "https://businessmodelhub.org"
 
 
 class _FrontMatterLoader(yaml.SafeLoader):
@@ -168,12 +170,15 @@ def render_document(env, template_name, meta, body_html, articles=(), registry=(
 
 
 def output_path(out_dir, rel_path):
-    """Map content/<dir>/<stem>.md to its dist index.html location.
+    """Map a content source path to its dist location.
 
-    index.md -> <dir>/index.html; anything else -> <dir>/<stem>/index.html.
+    index.md -> <dir>/index.html; 404.md -> <dir>/404.html;
+    anything else -> <dir>/<stem>/index.html.
     """
     if rel_path.stem == "index":
         return out_dir / rel_path.parent / "index.html"
+    if rel_path.stem == ERROR_STEM:
+        return out_dir / rel_path.parent / (ERROR_STEM + ".html")
     return out_dir / rel_path.parent / rel_path.stem / "index.html"
 
 
