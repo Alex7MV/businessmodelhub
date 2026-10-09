@@ -13,6 +13,7 @@ from render import (
     parse_front_matter,
     render_document,
     select_template,
+    url_for_output,
 )
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -245,6 +246,68 @@ class OutputPathTests(unittest.TestCase):
     def test_site_url_has_no_trailing_slash(self):
         self.assertFalse(SITE_URL.endswith("/"))
         self.assertTrue(SITE_URL.startswith("https://"))
+
+    def test_url_for_output_uses_trailing_slash_for_index(self):
+        out = Path("dist")
+        self.assertEqual(url_for_output(out, out / "index.html"), "/")
+        self.assertEqual(
+            url_for_output(out, out / "articles" / "index.html"), "/articles/"
+        )
+        self.assertEqual(
+            url_for_output(out, out / "articles" / "post" / "index.html"),
+            "/articles/post/",
+        )
+
+    def test_url_for_output_keeps_non_index_files(self):
+        out = Path("dist")
+        self.assertEqual(url_for_output(out, out / "404.html"), "/404.html")
+
+
+class SitemapTests(unittest.TestCase):
+    def build_site(self, tmp_path):
+        content = tmp_path / "content"
+        (content / "articles").mkdir(parents=True)
+        (content / "index.md").write_text(
+            "---\ntitle: Home\n---\n# Home\n", encoding="utf-8"
+        )
+        (content / "404.md").write_text(
+            "---\ntitle: Not found\n---\nBody\n", encoding="utf-8"
+        )
+        (content / "articles" / "index.md").write_text(
+            "---\ntitle: Articles\ntemplate: articles\n---\nIntro.\n",
+            encoding="utf-8",
+        )
+        (content / "articles" / "post.md").write_text(
+            "---\ntitle: Post\n---\nBody\n", encoding="utf-8"
+        )
+        out = tmp_path / "dist"
+        build(content, ROOT / "templates", ROOT / "assets", out)
+        return out
+
+    def test_sitemap_is_written(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = self.build_site(Path(tmp))
+            self.assertTrue((out / "sitemap.xml").exists())
+
+    def test_sitemap_urls_are_absolute_and_end_in_slash(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = self.build_site(Path(tmp))
+            xml = (out / "sitemap.xml").read_text(encoding="utf-8")
+            for loc in re.findall(r"<loc>([^<]+)</loc>", xml):
+                self.assertTrue(loc.startswith(SITE_URL + "/"))
+                self.assertTrue(loc.endswith("/"))
+
+    def test_sitemap_lists_every_page_except_404(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = self.build_site(Path(tmp))
+            xml = (out / "sitemap.xml").read_text(encoding="utf-8")
+            locs = re.findall(r"<loc>([^<]+)</loc>", xml)
+            self.assertEqual(
+                sorted(locs),
+                sorted([SITE_URL + "/", SITE_URL + "/articles/",
+                        SITE_URL + "/articles/post/"]),
+            )
+            self.assertNotIn("404", xml)
 
 
 if __name__ == "__main__":

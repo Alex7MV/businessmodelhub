@@ -182,6 +182,35 @@ def output_path(out_dir, rel_path):
     return out_dir / rel_path.parent / rel_path.stem / "index.html"
 
 
+def url_for_output(out_dir, path):
+    """Turn a written output path into its site-root-relative URL path."""
+    rel = Path(path).relative_to(out_dir).as_posix()
+    if rel == "index.html":
+        return "/"
+    if rel.endswith("/index.html"):
+        return "/" + rel[: -len("/index.html")] + "/"
+    return "/" + rel
+
+
+def write_sitemap(out_dir, written):
+    """Write sitemap.xml from the pages that were actually built."""
+    entries = []
+    for path in written:
+        if path.name == "404.html":
+            continue
+        url = SITE_URL + url_for_output(out_dir, path)
+        entries.append(
+            "  <url><loc>%s</loc></url>" % url.replace("&", "&amp;")
+        )
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        + "\n".join(entries)
+        + "\n</urlset>\n"
+    )
+    (out_dir / "sitemap.xml").write_text(xml, encoding="utf-8")
+
+
 def build(content_dir, templates_dir, assets_dir, out_dir):
     content_dir = Path(content_dir)
     templates_dir = Path(templates_dir)
@@ -211,6 +240,7 @@ def build(content_dir, templates_dir, assets_dir, out_dir):
         written.append(target)
 
     shutil.copytree(assets_dir, out_dir / "assets", dirs_exist_ok=True)
+    write_sitemap(out_dir, written)
     return sorted(written)
 
 
