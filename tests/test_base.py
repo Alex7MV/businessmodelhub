@@ -27,6 +27,14 @@ class BaseTemplateTests(unittest.TestCase):
         self.assertIn('href="/assets/css/style.css"', html)
         self.assertIn('src="/assets/js/main.js"', html)
 
+    def test_icon_links(self):
+        html = render("base.html")
+        self.assertIn('href="/assets/images/favicon.ico"', html)
+        self.assertIn('href="/assets/images/apple-touch-icon.png"', html)
+        self.assertIn('href="/assets/images/favicon-32x32.png"', html)
+        self.assertIn('href="/assets/images/favicon-16x16.png"', html)
+        self.assertIn('href="/assets/images/site.webmanifest"', html)
+
     def test_nav_active_marks_link(self):
         html = render("base.html", nav_active="principles")
         self.assertIn('href="/#principles" class="active"', html)

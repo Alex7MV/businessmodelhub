@@ -1,3 +1,4 @@
+import json
 import re
 import unittest
 
@@ -36,6 +37,22 @@ class AssetTests(unittest.TestCase):
         block = re.search(r"^\s*nav\s*\{(.*?)\}", css, re.S | re.M)
         self.assertIsNotNone(block, "no nav rule found in style.css")
         self.assertIn("max-width: 900px", block.group(1))
+
+    def test_manifest_icon_paths_resolve(self):
+        manifest = json.loads(
+            (ROOT / "assets" / "images" / "site.webmanifest").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertTrue(manifest["icons"], "manifest declares no icons")
+        for icon in manifest["icons"]:
+            target = ROOT / icon["src"].lstrip("/")
+            self.assertTrue(
+                target.exists(), "manifest icon does not exist: %s" % icon["src"]
+            )
+
+    def test_favicon_ico_exists(self):
+        self.assertTrue((ROOT / "assets" / "images" / "favicon.ico").exists())
 
 
 if __name__ == "__main__":
