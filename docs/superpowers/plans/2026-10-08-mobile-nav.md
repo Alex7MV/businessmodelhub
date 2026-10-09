@@ -37,10 +37,12 @@ py render.py
 ## The one rule that cannot be unit-tested
 
 A closed `<details>` hides its children through a user-agent rule. Overriding it
-on desktop needs BOTH `display: flex` and `content-visibility: visible`, because
-Chrome hides closed details with `content-visibility: hidden` rather than
-`display: none`. The tests confirm both declarations exist; they cannot confirm
-that a browser honours them. That check is manual — see Task 4.
+on desktop needs BOTH a rule on the child and one on `::details-content`.
+Measured in Chrome: with only the child overridden, `.nav-links` reports
+`display: flex` and four children but a **0 × 18** box — the `<details>` itself
+stays collapsed and the links are clipped away. Adding
+`.nav-menu::details-content { content-visibility: visible; }` restores a 315px
+box. The tests confirm both rules exist; layout is checked in Task 4.
 
 ---
 
@@ -272,10 +274,17 @@ the cross, with `rotate(45deg)` turning one into the other. `nav` is already
 Append to the end of `assets/css/style.css`:
 
 ```css
-        /* Nav disclosure: keep links visible on desktop */
+        /* Nav disclosure: keep links visible on desktop.
+           Chrome hides the contents of a closed <details> via the
+           ::details-content pseudo-element, so overriding the child alone
+           leaves the <details> box collapsed to zero width. */
         @media (min-width: 601px) {
             .nav-menu > summary {
                 display: none;
+            }
+
+            .nav-menu::details-content {
+                content-visibility: visible;
             }
 
             .nav-menu > .nav-links {
@@ -297,9 +306,9 @@ Append to the end of `assets/css/style.css`:
         }
 ```
 
-`content-visibility: visible` is not redundant: Chrome hides the children of a
-closed `<details>` with `content-visibility: hidden`, which `display: flex` alone
-does not override.
+`content-visibility: visible` on the child is not sufficient on its own, and the
+`::details-content` rule is not redundant: Chrome exposes closed-details content
+through that pseudo-element, and the child override does not reach it.
 
 The min-width query is placed after the max-width queries on purpose. Both apply
 at exactly 600px, so source order decides; the later rule wins and desktop
@@ -384,9 +393,9 @@ Start-Process "http://localhost:8000/"
 - [ ] **Step 2: Verify desktop at a wide viewport**
 
 Expected: four links in one row to the right of the logo, and no burger icon.
-This is the step most likely to fail — if the links are missing, the closed
-`details` override did not take effect in that browser, and the fix is confined
-to the two declarations in the `min-width: 601px` query.
+If the links are missing, the closed-`details` override did not take effect;
+measured against Chrome, the culprit is a missing
+`.nav-menu::details-content { content-visibility: visible; }`.
 
 - [ ] **Step 3: Verify mobile at 375px**
 
