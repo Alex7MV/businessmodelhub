@@ -349,6 +349,12 @@ class ErrorPageTests(unittest.TestCase):
                          "/#contact"):
                 self.assertIn('href="%s"' % href, html)
 
+    def test_404_page_shows_a_visible_heading(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = self.build_real(Path(tmp))
+            html = (out / "404.html").read_text(encoding="utf-8")
+            self.assertIn("<h1>Page not found</h1>", html)
+
 
 if __name__ == "__main__":
     unittest.main()
