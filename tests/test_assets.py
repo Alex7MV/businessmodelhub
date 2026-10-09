@@ -1,3 +1,4 @@
+import re
 import unittest
 
 from template_env import ROOT
@@ -29,6 +30,12 @@ class AssetTests(unittest.TestCase):
     def test_css_contains_registry_card_styles(self):
         css = (ROOT / "assets" / "css" / "style.css").read_text(encoding="utf-8")
         self.assertIn(".article-card-params", css)
+
+    def test_nav_is_constrained_to_layout_width(self):
+        css = (ROOT / "assets" / "css" / "style.css").read_text(encoding="utf-8")
+        block = re.search(r"^\s*nav\s*\{(.*?)\}", css, re.S | re.M)
+        self.assertIsNotNone(block, "no nav rule found in style.css")
+        self.assertIn("max-width: 900px", block.group(1))
 
 
 if __name__ == "__main__":
