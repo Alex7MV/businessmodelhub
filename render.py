@@ -211,6 +211,12 @@ def write_sitemap(out_dir, written):
     (out_dir / "sitemap.xml").write_text(xml, encoding="utf-8")
 
 
+def write_robots(out_dir):
+    """Write robots.txt at the site root pointing at the sitemap."""
+    text = "User-agent: *\nSitemap: %s/sitemap.xml\n" % SITE_URL
+    (out_dir / "robots.txt").write_text(text, encoding="utf-8")
+
+
 def build(content_dir, templates_dir, assets_dir, out_dir):
     content_dir = Path(content_dir)
     templates_dir = Path(templates_dir)
@@ -241,6 +247,7 @@ def build(content_dir, templates_dir, assets_dir, out_dir):
 
     shutil.copytree(assets_dir, out_dir / "assets", dirs_exist_ok=True)
     write_sitemap(out_dir, written)
+    write_robots(out_dir)
     return sorted(written)
 
 

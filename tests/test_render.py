@@ -310,5 +310,45 @@ class SitemapTests(unittest.TestCase):
             self.assertNotIn("404", xml)
 
 
+class RobotsTests(unittest.TestCase):
+    def build_real(self, tmp_path):
+        out = tmp_path / "dist"
+        build(ROOT / "content", ROOT / "templates", ROOT / "assets", out)
+        return out
+
+    def test_robots_is_written_at_site_root(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = self.build_real(Path(tmp))
+            self.assertTrue((out / "robots.txt").exists())
+
+    def test_robots_points_at_the_sitemap(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = self.build_real(Path(tmp))
+            robots = (out / "robots.txt").read_text(encoding="utf-8")
+            self.assertIn("Sitemap: %s/sitemap.xml" % SITE_URL, robots)
+            self.assertIn("User-agent: *", robots)
+
+
+class ErrorPageTests(unittest.TestCase):
+    def build_real(self, tmp_path):
+        out = tmp_path / "dist"
+        build(ROOT / "content", ROOT / "templates", ROOT / "assets", out)
+        return out
+
+    def test_404_page_is_written_at_root(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = self.build_real(Path(tmp))
+            self.assertTrue((out / "404.html").exists())
+            self.assertFalse((out / "404" / "index.html").exists())
+
+    def test_404_page_offers_all_sections(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = self.build_real(Path(tmp))
+            html = (out / "404.html").read_text(encoding="utf-8")
+            for href in ("/#principles", "/model-registry/", "/articles/",
+                         "/#contact"):
+                self.assertIn('href="%s"' % href, html)
+
+
 if __name__ == "__main__":
     unittest.main()
