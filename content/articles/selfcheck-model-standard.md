@@ -1,13 +1,13 @@
 ---
-title: "The BMH SelfCheck Model Standard REVISION A: Isolating Syntactic and Quantitative Drift"
-date: "2026-10-06"
-summary: "Revision A of the SelfCheck model standard, defining how syntactic drift is separated from quantitative drift so that a failing check identifies which layer actually broke."
+title: "The BMH SelfCheck Model Standard REVISION B: Isolating Syntactic and Quantitative Drift"
+date: "2026-10-12"
+summary: "Revision B of the SelfCheck model standard, defining how syntactic drift is separated from quantitative drift so that a failing check identifies which layer actually broke."
 tags: [methodology, standards]
 ---
 
-The integration of Large Language Models (LLMs) into critical enterprise workflows and autonomous transaction pipelines requires a paradigm shift from heuristic, natural-language evaluations to rigorous, bit-exact software engineering. 
-Standard academic benchmarks fail to expose micro-level weight degradation, token-id binding decay, and intermediate matrix rounding noise introduced during model compression. Evaluating a model's validity under compressed hardware constraints requires subjecting it to absolute syntactic, mathematical, and architectural boundaries where semantic drift is treated as a critical compilation failure. 
-Below is the mandatory technical breakdown of the three operational validation layers that define the absolute baseline for industrial-grade model readiness:
+The integration of Large Language Models (LLMs) into critical enterprise workflows and autonomous transaction pipelines requires a paradigm shift from heuristic, natural-language evaluations to rigorous, bit-exact software engineering.
+Standard academic benchmarks fail to expose micro-level weight degradation, token-id binding decay, and intermediate matrix rounding noise introduced during model compression. Evaluating a model's validity under compressed hardware constraints requires subjecting it to absolute syntactic, mathematical, and architectural boundaries where semantic drift is treated as a critical compilation failure.
+Below is the mandatory technical breakdown of the four operational validation layers that define the absolute baseline for industrial-grade model readiness:
 
 ## Part 1: ⚖️ Financial & Quantitative Determinism (FSISelfCheck)
 
@@ -115,4 +115,39 @@ Evaluate a simulated hardware register state holding a default static zero condi
 Task: Force the output token to represent this state strictly as a two-token alphabetical word connected by an underscore.
 Output Specification: Output exactly the uppercase characters pattern provided in the template below. Do not output raw single digits, omit spaces.
 Expected Template: BIT_ZERO
+```
+
+## Part 4: 🔌 Model Context Protocol Compliance (MCPSelfCheck)
+
+This module specifically targets open protocol compliance. It tests an LLM's capacity to act as a reliable agent within the Anthropic Model Context Protocol (MCP) framework under heavy hardware compression constraints without violating JSON-RPC 2.0 specifications.
+Unlike native tool calling (which merely tests schema layout), MCPSelfCheck enforces strict state-machine compliance. It benchmarks tool call initialization, resource uri retrieval, and model error-handling responses when an MCP server rejects parameters. A single missing key or flipped error code drops the agent into infinite echo loops—MCPSelfCheck eliminates this failure vector before deployment.
+
+Below are the 3 hard-coded protocol-clamping prompts added to our validation suite:
+
+### MCP-TEST-01 // TOOL-CALL-INITIALIZATION
+```markdown
+[CONTEXT]: MCP-Validation-Core-01 // Protocol Schema Compliance
+An upstream MCP server registers a tool named "fetch_secure_ledger" requiring a single string parameter "node_id".
+Task: Construct the strict JSON-RPC 2.0 call object execution block to invoke this tool with the argument value "NX-5090" and mapped strictly to request id 1.
+Output Specification: Output ONLY the unspaced, minified JSON string pattern. Do not emit markdown frames or chat echo. Output raw text only, do not wrap in markdown code blocks.
+Expected Template: {"jsonrpc":"2.0","method":"tools/call","params":{"name":"fetch_secure_ledger","arguments":{"node_id":"NX-5090"}},"id":1}
+```
+
+### MCP-TEST-02 // RESOURCE-READ-PROTOCOL
+```markdown
+[CONTEXT]: MCP-Validation-Core-02 // Context Resource Retrieval
+An agent triggers a hard-coded MCP resource lookup to read a secure compliance schema file bounded by a strict URI pointer.
+Target Resource: "schema://fsi/basel_three.json"
+Task: Formulate the explicit MCP protocol resource read request package layout string mapped strictly to request id 2.
+Output Specification: Output strictly the minified JSON string metadata layout payload without spaces. Do not emit markdown frames or chat echo. Output raw text only, do not wrap in markdown code blocks.
+Expected Template: {"jsonrpc":"2.0","method":"resources/read","params":{"uri":"schema://fsi/basel_three.json"},"id":2}
+```
+
+### MCP-TEST-03 // PROTOCOL-ERROR-HANDLING
+```markdown
+[CONTEXT]: MCP-Validation-Core-03 // Protocol Exception Guard
+An internal MCP execution loop encounters a strict "Invalid params" exception scenario during data routing (Standard Protocol Error Code: -32602).
+Task: Emit the hard-coded standard JSON-RPC 2.0 error response structure payload mapped strictly to session id 99.
+Output Specification: Output strictly the compressed syntax layout payload string without conversational padding. Do not emit markdown frames or chat echo. Output raw text only, do not wrap in markdown code blocks.
+Expected Template: {"jsonrpc":"2.0","error":{"code":-32602,"message":"Invalid params"},"id":99}
 ```
